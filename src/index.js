@@ -76,18 +76,6 @@ function hookEvents() {
                 });
         });
 
-    $('#undo-btn').on('click', () => {
-        if ($connections.length) {
-            const $lastConnection = $connections.pop().remove();
-            const lastColor = getColor($lastConnection);
-            $(`circle.${lastColor}`).removeClass('connecting');
-
-            setScore(0, lastColor);
-            colorStripe(lastColor, false);
-            updateScores();
-        }
-    })
-
     $(document).on('mouseup', (e) => {
         if ($newConnection) {
             if ($newConnection.hasClass('connecting')) {
