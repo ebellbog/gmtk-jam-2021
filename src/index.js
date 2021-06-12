@@ -11,8 +11,8 @@ const GAME_COLS = 10;
 const GAME_ROWS = 8;
 
 let $newConnection, $startPt;
-let allowedColors;
-const $connections = [];
+let allowedColors, currentColor;
+let $connections = [];
 
 $(document).ready(() => {
     setupFlag();
@@ -25,9 +25,12 @@ function hookEvents() {
         .on('mousedown', 'circle', (e) => {
             $startPt = $(e.target);
             const coords = {x: $startPt.attr('cx'), y: $startPt.attr('cy')};
+            currentColor = getColor($startPt);
+
             $newConnection = drawLine(coords, coords)
-                .addClass(`${$startPt.attr('class')} dragging`);
-            allowedColors = getAdjacentColors(getColor($newConnection));
+                .addClass(`${currentColor} dragging`);
+
+            allowedColors = getAdjacentColors(currentColor);
         })
         .on('mousemove', (e) => {
             if (!$newConnection || $newConnection.hasClass('connecting')) return;
@@ -81,27 +84,34 @@ function hookEvents() {
 
             setScore(0, lastColor);
             colorStripe(lastColor, false);
-            updateScore();
+            updateScores();
         }
     })
 
     $(document).on('mouseup', (e) => {
         if ($newConnection) {
             if ($newConnection.hasClass('connecting')) {
-                const $target = $(e.target);
-                updateLine($newConnection, {x: $target.attr('cx'), y: $target.attr('cy')});
-
                 $newConnection.removeClass('dragging');
+
+                // Remove any illegally crossed connections & disconnect their endpoints
+                $connections = $connections.filter(($connection) => {
+                    if ($connection.hasClass('illegal')) {
+                        $connection.remove();
+                        $(`circle.connected.${getColor($connection)}`).removeClass('connecting connected');
+                        return false;
+                    }
+                    return true;
+                });
                 $connections.push($newConnection);
 
-                const newColor = getColor($newConnection);
-                colorStripe(newColor, true);
+                $('circle.connecting').addClass('connected');
 
-                updateScore();
+                updateScores();
             } else {
                 $newConnection.remove();
             }
             $newConnection = null;
+            $('.illegal').removeClass('illegal');
         }
     });
 }
@@ -146,11 +156,18 @@ const formatScore = (score, color) => (color) ? `${Math.round(score)} pts` : `To
 const setScore = (score, color) => ((color) ? $(`.${color} .score`) : $totalScore).html(formatScore(score, color));
 const calcScore = ($connection) => Math.round(getLength($connection) / (CIRCLE_SPACING + 2 * CIRCLE_SIZE));
 
-function updateScore() {
+function updateScores() {
+    colorList.forEach((color) => {
+        setScore(0, color);
+        colorStripe(color, false);
+    });
     const totalScore = $connections.reduce((total, $connection) => {
         const colorScore = calcScore($connection);
         const color = getColor($connection);
+
         setScore(colorScore, color);
+        colorStripe(color, true);
+
         return total + colorScore;
     }, 0);
     setScore(totalScore);
@@ -201,13 +218,12 @@ function doIntersect($line1, $line2) {
 
 const testIntersections = _.throttle(() => {
     if (!$newConnection || !$connections.length) return;
-    const intersections = $connections.filter(($connection) => doIntersect($connection, $newConnection));
-    const isLegal = intersections.every((i) => allowedColors.includes(getColor(i)));
-    if (isLegal) {
-        $newConnection.removeClass('illegal');
-    } else {
-        $newConnection.addClass('illegal').removeClass('.connecting');
-    }
+    $connections.forEach(($connection) => {
+        $connection.toggleClass('illegal',
+            getColor($connection) === currentColor ||
+            doIntersect($connection, $newConnection) &&
+            !allowedColors.includes(getColor($connection)));
+    });
 }, 100);
 
 function getLength($line) {
