@@ -2,12 +2,15 @@ import _ from 'lodash';
 import './index.less';
 
 const $game = $('#game');
+const $score = $('#score');
 
 const CIRCLE_SIZE = 20;
+const CIRCLE_SPACING = 30;
+
 const GAME_COLS = 10;
 const GAME_ROWS = 8;
 
-let $newConnection, prevColor;
+let $newConnection, allowedColors;
 const $connections = [];
 
 $(document).ready(() => {
@@ -18,10 +21,10 @@ $(document).ready(() => {
             const coords = {x: $startPt.attr('cx'), y: $startPt.attr('cy')};
             $newConnection = drawLine(coords, coords)
                 .addClass(`${$startPt.attr('class')} dragging`);
-            prevColor = getPrevColor(getColor($newConnection));
+            allowedColors = getAdjacentColors(getColor($newConnection));
         })
         .on('mousemove', (e) => {
-            if (!$newConnection) return;
+            if (!$newConnection || $newConnection.hasClass('connecting')) return;
 
             const parentOffset = $game.offset();
             const x = e.pageX - parentOffset.left;
@@ -34,8 +37,13 @@ $(document).ready(() => {
         .on('mouseover', 'circle', (e) => {
             const $circle = $(e.target);
             if ($newConnection) {
-                if (getColor($circle) !== getColor($newConnection) || $newConnection.hasClass('illegal')) return;
+                if (
+                    $newConnection.hasClass('illegal') ||
+                    getColor($circle) !== getColor($newConnection) ||
+                    getLength($newConnection) < CIRCLE_SIZE * 2
+                ) return;
                 $newConnection.addClass('connecting');
+                updateLine($newConnection, {x: $circle.attr('cx'), y: $circle.attr('cy')});
             }
 
             $circle.animate(
@@ -59,6 +67,13 @@ $(document).ready(() => {
                 });
         });
 
+    $('#undo-btn').on('click', () => {
+        if ($connections.length) {
+            $connections.pop().remove();
+            updateScore();
+        }
+    })
+
     $(document).on('mouseup', (e) => {
         if ($newConnection) {
             if ($newConnection.hasClass('connecting')) {
@@ -67,6 +82,8 @@ $(document).ready(() => {
 
                 $newConnection.removeClass('dragging');
                 $connections.push($newConnection);
+
+                updateScore();
             } else {
                 $newConnection.remove();
             }
@@ -76,19 +93,28 @@ $(document).ready(() => {
 });
 
 function setupGame() {
-    const gameHeight = $game.height();
-    const gameWidth = $game.width();
+    const spacing = CIRCLE_SPACING + CIRCLE_SIZE * 2;
+    $game.css({
+        height: spacing * (GAME_ROWS + 1),
+        width : spacing * (GAME_COLS + 1)
+    })
 
     for (let row = 0; row < GAME_ROWS; row++) {
-        const height = gameHeight / (GAME_ROWS + 1) * (row + 1);
+        const height = spacing * (row + 1);
         for (let col = 0; col < GAME_COLS; col++) {
             drawCircle(
-                gameWidth / (GAME_COLS + 1) * (col + 1),
+                spacing * (col + 1),
                 height,
                 CIRCLE_SIZE,
             ).addClass(randColor());
         }
     }
+}
+
+function updateScore() {
+    const spacing = CIRCLE_SPACING + 2 * CIRCLE_SIZE
+    const score = $connections.reduce((total, $connection) => total += getLength($connection) / spacing, 0);
+    $score.html(Math.round(score));
 }
 
 // Color methods
@@ -106,10 +132,16 @@ const colorList = Object.keys(colorDict);
 function getColor($el) {
     return $el.attr('class').split(' ')[0];
 }
-
 function getPrevColor(color) {
     const idx = colorDict[color]
     return (idx) ? colorList[idx - 1] : null;
+}
+function getNextColor(color) {
+    const idx = colorDict[color]
+    return (idx < colorList.length -1) ? colorList[idx + 1] : null;
+}
+function getAdjacentColors(color) {
+    return _.filter([getPrevColor(color), getNextColor(color)]);
 }
 
 // Geometric methods
@@ -131,9 +163,15 @@ function doIntersect($line1, $line2) {
 const testIntersections = _.throttle(() => {
     if (!$newConnection || !$connections.length) return;
     const intersections = $connections.filter(($connection) => doIntersect($connection, $newConnection));
-    const isLegal = intersections.every((i) => getColor(i) === prevColor);
+    const isLegal = intersections.every((i) => allowedColors.includes(getColor(i)));
     $newConnection.toggleClass('illegal', !isLegal);
 }, 100);
+
+function getLength($line) {
+    const deltaX = $line.attr('x2') - $line.attr('x1');
+    const deltaY = $line.attr('y2') - $line.attr('y1');
+    return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+}
 
 
 // Utility methods
