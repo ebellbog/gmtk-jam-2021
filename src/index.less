@@ -1,4 +1,4 @@
-@defaultFont: 'Titillium Web', sans-serif;
+@font-family: 'Press Start 2P', cursive;
 
 @red: red;
 @orange: orange;
@@ -6,6 +6,8 @@
 @green: limegreen;
 @blue: #0a72ff;
 @purple: #ba00ff;
+
+@gameShadow: 0 0 6px 3px white;
 
 body {
     margin: 0;
@@ -19,9 +21,66 @@ body {
     left: 50%;
     transform: translateX(-50%);
 
-    font-family: sans-serif;
-    font-size: 64px;
+    font-family: 'Press Start 2P';
+    font-size: 52px;
     color: white;
+}
+
+#flag {
+    position: absolute;
+    top: 50%;
+    left: 2%;
+    transform: translateY(-50%);
+
+    border-radius: 3px;
+    overflow: hidden;
+
+    .stripe {
+        height: 30px;
+        width: 250px;
+
+        .score {
+            font-family: 'Press Start 2P';
+            font-size: 14px;
+            text-align: center;
+            line-height: 30px;
+
+            color: white;
+            text-shadow: 2px 2px 0 black;
+        }
+    }
+}
+
+.color-class(@color) {
+    fill: fade(@color, 25%);
+    stroke: @color;
+    background-color: @color;
+
+    &.outline {
+        background-color: fade(@color, 25%);
+        box-shadow: inset 0 0 0 2px @color;
+    }
+    &.connecting {
+        fill: @color;
+    }
+}
+.red {
+    .color-class(@red);
+}
+.orange {
+    .color-class(@orange);
+}
+.yellow {
+    .color-class(@yellow);
+}
+.green {
+    .color-class(@green);
+}
+.blue {
+    .color-class(@blue);
+}
+.purple {
+    .color-class(@purple);
 }
 
 #game {
@@ -33,25 +92,23 @@ body {
     width: 800px;
     height: 600px;
 
-    background-color: #333;
-    border-radius: 20px;
-    box-shadow: 6px 4px 0 #666;
+    border-radius: 16px;
+    border: 4px solid white;
 
     circle {
         cursor: pointer;
+        stroke-width: 3px;
     }
 
     line {
-        stroke-width: 8;
+        stroke-width: 7;
         stroke-linecap: round;
         pointer-events: none;
 
         &.dragging {
             stroke-width: 5;
-            opacity: 0.5;
 
             &.connecting {
-                opacity: 0.7;
                 stroke-width: 10;
             }
 
@@ -61,31 +118,6 @@ body {
                 stroke-dasharray: 10;
             }
         }
-    }
-
-    .red {
-        fill: @red;
-        stroke: @red;
-    }
-    .orange {
-        fill: @orange;
-        stroke: @orange;
-    }
-    .yellow {
-        fill: @yellow;
-        stroke: @yellow;
-    }
-    .green {
-        fill: @green;
-        stroke: @green;
-    }
-    .blue {
-        fill: @blue;
-        stroke: @blue;
-    }
-    .purple {
-        fill: @purple;
-        stroke: @purple;
     }
 }
 

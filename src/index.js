@@ -2,7 +2,7 @@ import _ from 'lodash';
 import './index.less';
 
 const $game = $('#game');
-const $score = $('#score');
+let $totalScore;
 
 const CIRCLE_SIZE = 20;
 const CIRCLE_SPACING = 30;
@@ -10,14 +10,20 @@ const CIRCLE_SPACING = 30;
 const GAME_COLS = 10;
 const GAME_ROWS = 8;
 
-let $newConnection, allowedColors;
+let $newConnection, $startPt;
+let allowedColors;
 const $connections = [];
 
 $(document).ready(() => {
+    setupFlag();
     setupGame();
+    hookEvents();
+});
+
+function hookEvents() {
     $game
         .on('mousedown', 'circle', (e) => {
-            const $startPt = $(e.target);
+            $startPt = $(e.target);
             const coords = {x: $startPt.attr('cx'), y: $startPt.attr('cy')};
             $newConnection = drawLine(coords, coords)
                 .addClass(`${$startPt.attr('class')} dragging`);
@@ -33,7 +39,6 @@ $(document).ready(() => {
             updateLine($newConnection, {x, y});
             testIntersections();
         })
-        .on('mousemover')
         .on('mouseover', 'circle', (e) => {
             const $circle = $(e.target);
             if ($newConnection) {
@@ -42,8 +47,9 @@ $(document).ready(() => {
                     getColor($circle) !== getColor($newConnection) ||
                     getLength($newConnection) < CIRCLE_SIZE * 2
                 ) return;
-                $newConnection.addClass('connecting');
+                [$newConnection, $circle, $startPt].forEach(($el) => $el.addClass('connecting'));
                 updateLine($newConnection, {x: $circle.attr('cx'), y: $circle.attr('cy')});
+                return;
             }
 
             $circle.animate(
@@ -54,11 +60,11 @@ $(document).ready(() => {
                 });
         })
         .on('mouseout', 'circle', (e) => {
+            const $circle = $(e.target);
             if ($newConnection) {
-                $newConnection.removeClass('connecting');
+                [$newConnection, $startPt, $circle].forEach(($el) => $el.removeClass('connecting'));
             }
 
-            const $circle = $(e.target);
             $circle.animate(
                 {r: CIRCLE_SIZE},
                 {
@@ -69,7 +75,12 @@ $(document).ready(() => {
 
     $('#undo-btn').on('click', () => {
         if ($connections.length) {
-            $connections.pop().remove();
+            const $lastConnection = $connections.pop().remove();
+            const lastColor = getColor($lastConnection);
+            $(`circle.${lastColor}`).removeClass('connecting');
+
+            setScore(0, lastColor);
+            colorStripe(lastColor, false);
             updateScore();
         }
     })
@@ -83,6 +94,9 @@ $(document).ready(() => {
                 $newConnection.removeClass('dragging');
                 $connections.push($newConnection);
 
+                const newColor = getColor($newConnection);
+                colorStripe(newColor, true);
+
                 updateScore();
             } else {
                 $newConnection.remove();
@@ -90,7 +104,7 @@ $(document).ready(() => {
             $newConnection = null;
         }
     });
-});
+}
 
 function setupGame() {
     const spacing = CIRCLE_SPACING + CIRCLE_SIZE * 2;
@@ -111,10 +125,35 @@ function setupGame() {
     }
 }
 
+// Flag methods
+
+function setupFlag() {
+    const $flag = $('#flag');
+    colorList.forEach((color) => {
+        $(`<div class="stripe outline ${color}"><div class="score">0 pts</div></div`).appendTo($flag);
+    });
+    $(`<div class="stripe"><div id="totalScore" class="score">Total: 0</div></div`).appendTo($flag);
+    $totalScore = $('#totalScore');
+}
+
+function colorStripe(stripeColor, isColored) {
+    $(`.stripe.${stripeColor}`).toggleClass('outline', !isColored);
+}
+
+// Scoring methods
+
+const formatScore = (score, color) => (color) ? `${Math.round(score)} pts` : `Total: ${score}`;
+const setScore = (score, color) => ((color) ? $(`.${color} .score`) : $totalScore).html(formatScore(score, color));
+const calcScore = ($connection) => Math.round(getLength($connection) / (CIRCLE_SPACING + 2 * CIRCLE_SIZE));
+
 function updateScore() {
-    const spacing = CIRCLE_SPACING + 2 * CIRCLE_SIZE
-    const score = $connections.reduce((total, $connection) => total += getLength($connection) / spacing, 0);
-    $score.html(Math.round(score));
+    const totalScore = $connections.reduce((total, $connection) => {
+        const colorScore = calcScore($connection);
+        const color = getColor($connection);
+        setScore(colorScore, color);
+        return total + colorScore;
+    }, 0);
+    setScore(totalScore);
 }
 
 // Color methods
@@ -164,7 +203,11 @@ const testIntersections = _.throttle(() => {
     if (!$newConnection || !$connections.length) return;
     const intersections = $connections.filter(($connection) => doIntersect($connection, $newConnection));
     const isLegal = intersections.every((i) => allowedColors.includes(getColor(i)));
-    $newConnection.toggleClass('illegal', !isLegal);
+    if (isLegal) {
+        $newConnection.removeClass('illegal');
+    } else {
+        $newConnection.addClass('illegal').removeClass('.connecting');
+    }
 }, 100);
 
 function getLength($line) {
