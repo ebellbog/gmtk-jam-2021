@@ -103,13 +103,16 @@ function hookEvents() {
                 });
                 $connections.push($newConnection);
 
-                $('circle.connecting').addClass('connected');
+                $startPt.add($(e.target)).addClass('connected');
 
                 updateScores();
             } else {
+                // Connection never reached a matching endpoint
                 $newConnection.remove();
             }
+
             $newConnection = null;
+            $startPt = null;
             $('.illegal').removeClass('illegal');
         }
     });
@@ -231,12 +234,40 @@ function getAdjacentColors(color) {
 
 function doIntersect($line1, $line2) {
     const getCoords = ($line) => [
-        {x: $line.attr('x1'), y: $line.attr('y1')},
-        {x: $line.attr('x2'), y: $line.attr('y2')}
+        {x: parseInt($line.attr('x1')), y: parseInt($line.attr('y1'))},
+        {x: parseInt($line.attr('x2')), y: parseInt($line.attr('y2'))}
     ];
 
-    const [start1, end1] = getCoords($line1);
-    const [start2, end2] = getCoords($line2);
+    const extendLine = ([start, end]) => {
+        const amount = CIRCLE_SIZE / 2;
+        if (start.x === end.x) { // for vertical slope
+            if (start.y > end.y) {
+                start.y += amount;
+                end.y -= amount;
+            } else {
+                start.y -= amount;
+                end.y += amount;
+            }
+            return [start, end];
+        }
+        const slope = (end.y - start.y) / (end.x - start.x);
+        const deltaX = Math.sqrt(Math.pow(amount, 2) / (Math.pow(slope, 2) + 1));
+        if (end.x > start.x) {
+            end.x += deltaX;
+            end.y += deltaX * slope;
+            start.x -= deltaX;
+            start.y -= deltaX * slope;
+        } else {
+            end.x -= deltaX;
+            end.y -= deltaX * slope;
+            start.x += deltaX;
+            start.y += deltaX * slope;
+        }
+        return [start, end];
+    }
+
+    const [start1, end1] = extendLine(getCoords($line1));
+    const [start2, end2] = extendLine(getCoords($line2));
 
     const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
     return ccw(start1, start2, end2) !== ccw(end1, start2, end2) &&
@@ -254,9 +285,30 @@ const testIntersections = _.throttle(() => {
 }, 100);
 
 function getLength($line) {
-    const deltaX = $line.attr('x2') - $line.attr('x1');
-    const deltaY = $line.attr('y2') - $line.attr('y1');
-    return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+    const start = {x: $line.attr('x1'), y: $line.attr('y1')};
+    const end = {x: $line.attr('x2'), y: $line.attr('y2')};
+    return getDist(start, end);
+}
+
+function getDist(p1, p2) {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+}
+
+function distToLine(l1, l2, p) {
+    const m1 = (l2.y - l1.y) / (l2.x - l1.x);
+    const b1 = l1.y - l1.x * m1;
+
+    const m2 = -1 / m1;
+    const b2 = p.y - p.x * m2;
+
+    const cX = (b2 - b1) / (m1 - m2);
+    const cY = m1 * cX + b1;
+    let closest = {x: cX, y: cY};
+
+    if (getDist(l1 , closest) > getDist(l1, l2)) closest = l2;
+    else if (getDist(l2, closest) > getDist(l1, l2)) closest = l1;
+
+    return getDist(closest, p);
 }
 
 
