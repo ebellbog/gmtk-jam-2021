@@ -154,6 +154,10 @@ function setMultiplier(color, value) {
     $(`.${color} .multiplier`).html(value > 1 ? `x${value}` : '');
 }
 
+function setConnectsForward(color, doesConnect) {
+    $(`.stripe.${color}`).toggleClass('connected', doesConnect);
+}
+
 // Scoring methods
 
 const formatScore = (score, color) => (color) ? `${Math.round(score)} pts` : `Total: ${score}`;
@@ -210,6 +214,7 @@ function updateMultipliers() {
         idx++;
     }
 
+    Object.entries(connectsForward).map(([color, doesConnect]) => setConnectsForward(color, doesConnect));
     Object.entries(multipliers).map(([color, value]) => setMultiplier(color, value));
 }
 
