@@ -7,8 +7,6 @@
 @blue: #0a72ff;
 @purple: #ba00ff;
 
-@gameShadow: 0 0 6px 3px white;
-
 body {
     margin: 0;
     padding: 0;
@@ -27,17 +25,16 @@ body {
 }
 
 #title {
-    margin-left: 50%;
-    transform: translateX(-40%);
+    margin: 0 auto;
+    width: 310px;
 
     line-height: 60px;
     white-space: nowrap;
 
-    margin-top: -120px;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 
     font-family: 'Press Start 2P';
-    font-size: 42px;
+    font-size: 44px;
     color: white;
 
     .text {
@@ -169,8 +166,59 @@ body {
     }
 }
 
-.btn {
-    background-color: transparent;
-    border: none;
-    cursor: pointer;
+#footer {
+    width: 100%;
+    margin-top: 25px;
+    min-height: 100px;
+
+    font-family: 'Press Start 2P';
+    text-align: center;
+
+}
+.text-success {
+    color: white;
+    animation: pop 1.5s;
+    animation-fill-mode: forwards;
+}
+.text-failure {
+    color: @red;
+    font-size: 38px;
+    animation: sink 2s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes pop {
+    0% {
+        opacity: 0;
+        font-size: 16px;
+    }
+    20% {
+        font-size: 44px;
+    }
+    40% {
+        opacity: 1;
+        font-size: 38px;
+    }
+    75% {
+        opacity: 1;
+        font-size: 38px;
+    }
+    100% {
+        opacity: 0;
+        font-size: 32px;
+    }
+}
+
+@keyframes sink {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%);
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(120%);
+    }
 }

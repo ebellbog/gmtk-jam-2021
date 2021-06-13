@@ -2,7 +2,7 @@ import _ from 'lodash';
 import './index.less';
 
 const $game = $('#game');
-let $totalScore;
+let totalScore = 0;
 
 const colorDict = {
     red: 0,
@@ -105,7 +105,7 @@ function hookEvents() {
 
                 $startPt.add($(e.target)).addClass('connected');
 
-                updateScores();
+                updateScores(getColor($newConnection));
             } else {
                 // Connection never reached a matching endpoint
                 $newConnection.remove();
@@ -137,7 +137,7 @@ function setupGame() {
     }
 }
 
-// Flag methods
+/* Flag methods */
 
 function setupFlag() {
     const $flag = $('#flag');
@@ -158,19 +158,21 @@ function setConnectsForward(color, doesConnect) {
     $(`.stripe.${color}`).toggleClass('connected', doesConnect);
 }
 
-// Scoring methods
+/* Scoring methods */
 
 const formatScore = (score, color) => (color) ? `${Math.round(score)} pts` : `Total: ${score}`;
 const setScore = (score, color) => (color) ? $(`.${color} .score`).html(formatScore(score, color)) : $('#flag').attr('data-total-score', formatScore(score));
 const calcScore = ($connection) => Math.round(getLength($connection) / (CIRCLE_SPACING + 2 * CIRCLE_SIZE));
 
-function updateScores() {
+function updateScores(lastColorAdded) {
+    const prevScore = totalScore;
+
     updateMultipliers();
     colorList.forEach((color) => {
         setScore(0, color);
         colorStripe(color, false);
     });
-    const totalScore = $connections.reduce((total, $connection) => {
+    totalScore = $connections.reduce((total, $connection) => {
         const colorScore = calcScore($connection);
         const color = getColor($connection);
 
@@ -180,6 +182,13 @@ function updateScores() {
         return total + colorScore * multipliers[color];
     }, 0);
     setScore(totalScore);
+
+    const netScore = totalScore - prevScore;
+    if (netScore) {
+        flashMessage(`${netScore > 0 ? '+' : ''}${netScore}`,
+            netScore > 0 ? 'success' : 'failure',
+            lastColorAdded);
+    }
 }
 
 function updateMultipliers() {
@@ -218,7 +227,22 @@ function updateMultipliers() {
     Object.entries(multipliers).map(([color, value]) => setMultiplier(color, value));
 }
 
-// Color methods
+// Valid types: success, failure
+function flashMessage(message, type, color) {
+    const $message = $(`<div class="text-${type}">${message}</div>`);
+    $('#footer').append($message);
+
+    if (type === 'success') {
+        $message.addClass(color);
+        const actualColor = $message.css('stroke');
+        $message.removeClass(color).css('text-shadow', `4px 3px ${actualColor}`);
+    }
+
+    const duration = parseFloat($message.css('animation-duration'));
+    setTimeout(() => $message.remove(), duration * 1000);
+}
+
+/* Color methods */
 
 function getColor($el) {
     return $el.attr('class').split(' ')[0];
@@ -235,7 +259,7 @@ function getAdjacentColors(color) {
     return _.filter([getPrevColor(color), getNextColor(color)]);
 }
 
-// Geometric methods
+/* Geometric methods */
 
 function doIntersect($line1, $line2) {
     const getCoords = ($line) => [
@@ -317,7 +341,7 @@ function distToLine(l1, l2, p) {
 }
 
 
-// Utility methods
+/* Utility methods */
 
 function randInt(min, max) {
     return Math.round(Math.random() * (max - min) + min);
@@ -326,7 +350,7 @@ function randColor() {
     return ['red', 'orange', 'yellow', 'green', 'blue', 'purple'][randInt(0, 5)];
 }
 
-// SVG methods
+/* SVG methods */
 
 function clearSvg() {
     $game.empty();
