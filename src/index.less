@@ -10,7 +10,11 @@
 body {
     margin: 0;
     padding: 0;
+    min-width: 1300px;
+
     background-color: black;
+
+    font-family: 'Press Start 2P';
 
     display: flex;
     justify-content: center;
@@ -24,6 +28,40 @@ body {
     }
 }
 
+#left-sidebar {
+    color: white;
+    padding: 24px;
+
+    #level {
+        width: 100%;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 24px;
+
+        padding: 12px 0;
+        margin: 22px 0;
+        border-bottom: 2px solid white;
+        border-top: 2px solid white;
+    }
+
+    .description {
+        line-height: 24px;
+        letter-spacing: 1px;
+        hyphens: auto;
+        font-size: 13px;
+
+        li {
+            margin-left: -18px;
+            margin-bottom: 8px;
+        }
+    }
+
+    .header {
+        font-size: 18px;
+        margin: 30px 0;
+    }
+}
+
 #title {
     margin: 0 auto;
     width: 310px;
@@ -33,7 +71,6 @@ body {
 
     margin-bottom: 25px;
 
-    font-family: 'Press Start 2P';
     font-size: 44px;
     color: white;
 
@@ -55,7 +92,6 @@ body {
         line-height: 34px;
         width: 100%;
 
-        font-family: 'Press Start 2P';
         font-size: 14px;
 
         margin-bottom: 7px;
@@ -88,7 +124,6 @@ body {
     &::after {
         content: attr(data-total-score);
         color: white;
-        font-family: 'Press Start 2P';
         font-size: 14px;
         line-height: 40px;
     }
@@ -171,13 +206,12 @@ body {
     margin-top: 25px;
     min-height: 100px;
 
-    font-family: 'Press Start 2P';
     text-align: center;
 
 }
 .text-success {
     color: white;
-    animation: pop 1.5s;
+    animation: pop 1.25s;
     animation-fill-mode: forwards;
 }
 .text-failure {
@@ -199,7 +233,7 @@ body {
         opacity: 1;
         font-size: 38px;
     }
-    75% {
+    65% {
         opacity: 1;
         font-size: 38px;
     }

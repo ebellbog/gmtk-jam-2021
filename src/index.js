@@ -140,6 +140,10 @@ function setupGame() {
     }
 }
 
+function randomizeBoard() {
+    $('circle').each((idx, el) => $(el).attr('class', randColor()));
+}
+
 /* Flag methods */
 
 function setupFlag() {
@@ -195,7 +199,7 @@ function updateScores(lastColorAdded) {
             netScore > 0 ? 'success' : 'failure',
             lastColorAdded]);
     }
-    if (netMultiplier) {
+    if (netMultiplier && (netMultiplier > 0) == (netScore > 0)) { // Only flash multiplier if changes in same direction as score
         const isSuccess = netMultiplier > 0;
         messages.push([`${isSuccess ? '↑' : '↓'} x${multipliers[lastColorAdded]}${isSuccess ? '!' : ''}`,
             isSuccess ? 'success' : 'failure',
