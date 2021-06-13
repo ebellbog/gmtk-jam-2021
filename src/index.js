@@ -13,7 +13,7 @@ const colorDict = {
     purple: 5
 }
 const colorList = Object.keys(colorDict);
-let multipliers;
+let multipliers = _.mapValues(colorDict, () => 1);
 
 const CIRCLE_SIZE = 20;
 const CIRCLE_SPACING = 30;
@@ -24,6 +24,9 @@ const GAME_ROWS = 8;
 let $newConnection, $startPt;
 let allowedColors, currentColor;
 let $connections = [];
+
+const messageQueue = [];
+let isFlashing = false;
 
 $(document).ready(() => {
     setupFlag();
@@ -166,6 +169,7 @@ const calcScore = ($connection) => Math.round(getLength($connection) / (CIRCLE_S
 
 function updateScores(lastColorAdded) {
     const prevScore = totalScore;
+    const prevMultiplier = multipliers[lastColorAdded];
 
     updateMultipliers();
     colorList.forEach((color) => {
@@ -184,11 +188,20 @@ function updateScores(lastColorAdded) {
     setScore(totalScore);
 
     const netScore = totalScore - prevScore;
+    const netMultiplier = multipliers[lastColorAdded] - prevMultiplier;
+    const messages = [];
     if (netScore) {
-        flashMessage(`${netScore > 0 ? '+' : ''}${netScore}`,
+        messages.push([`${netScore > 0 ? '+' : ''}${netScore}`,
             netScore > 0 ? 'success' : 'failure',
-            lastColorAdded);
+            lastColorAdded]);
     }
+    if (netMultiplier) {
+        const isSuccess = netMultiplier > 0;
+        messages.push([`${isSuccess ? '↑' : '↓'} x${multipliers[lastColorAdded]}${isSuccess ? '!' : ''}`,
+            isSuccess ? 'success' : 'failure',
+            lastColorAdded]);
+    }
+    if (messages.length) flashMessages(messages);
 }
 
 function updateMultipliers() {
@@ -228,7 +241,9 @@ function updateMultipliers() {
 }
 
 // Valid types: success, failure
-function flashMessage(message, type, color) {
+function _flashMessage(message, type, color, cb) {
+    isFlashing = true;
+
     const $message = $(`<div class="text-${type}">${message}</div>`);
     $('#footer').append($message);
 
@@ -239,7 +254,21 @@ function flashMessage(message, type, color) {
     }
 
     const duration = parseFloat($message.css('animation-duration'));
-    setTimeout(() => $message.remove(), duration * 1000);
+    setTimeout(() => {
+        $message.remove();
+        isFlashing = false;
+        if (cb) cb();
+    }, duration * 1000);
+}
+
+function flashMessages(messages) {
+    if (messages) messageQueue.push(...messages);
+    if (isFlashing) return;
+
+    let message = messageQueue.shift();
+    if (!message) return;
+
+    _flashMessage(...message, () => flashMessages());
 }
 
 /* Color methods */
