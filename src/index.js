@@ -4,6 +4,17 @@ import './index.less';
 const $game = $('#game');
 let $totalScore;
 
+const colorDict = {
+    red: 0,
+    orange: 1,
+    yellow: 2,
+    green: 3,
+    blue: 4,
+    purple: 5
+}
+const colorList = Object.keys(colorDict);
+let multipliers;
+
 const CIRCLE_SIZE = 20;
 const CIRCLE_SPACING = 30;
 
@@ -128,23 +139,26 @@ function setupGame() {
 function setupFlag() {
     const $flag = $('#flag');
     colorList.forEach((color) => {
-        $(`<div class="stripe outline ${color}"><div class="score">0 pts</div></div`).appendTo($flag);
+        $(`<div class="stripe outline ${color}"><span class="score">0 pts</span><span class="multiplier"></span></div`).appendTo($flag);
     });
-    $(`<div class="stripe"><div id="totalScore" class="score">Total: 0</div></div`).appendTo($flag);
-    $totalScore = $('#totalScore');
 }
 
 function colorStripe(stripeColor, isColored) {
     $(`.stripe.${stripeColor}`).toggleClass('outline', !isColored);
 }
 
+function setMultiplier(color, value) {
+    $(`.${color} .multiplier`).html(value > 1 ? `x${value}` : '');
+}
+
 // Scoring methods
 
 const formatScore = (score, color) => (color) ? `${Math.round(score)} pts` : `Total: ${score}`;
-const setScore = (score, color) => ((color) ? $(`.${color} .score`) : $totalScore).html(formatScore(score, color));
+const setScore = (score, color) => (color) ? $(`.${color} .score`).html(formatScore(score, color)) : $('#flag').attr('data-total-score', formatScore(score));
 const calcScore = ($connection) => Math.round(getLength($connection) / (CIRCLE_SPACING + 2 * CIRCLE_SIZE));
 
 function updateScores() {
+    updateMultipliers();
     colorList.forEach((color) => {
         setScore(0, color);
         colorStripe(color, false);
@@ -156,22 +170,47 @@ function updateScores() {
         setScore(colorScore, color);
         colorStripe(color, true);
 
-        return total + colorScore;
+        return total + colorScore * multipliers[color];
     }, 0);
     setScore(totalScore);
 }
 
-// Color methods
+function updateMultipliers() {
+    if ($connections.length <= 1) {
+        return multipliers = _.mapValues(colorDict, () => 1);
+    }
 
-const colorDict = {
-    red: 0,
-    orange: 1,
-    yellow: 2,
-    green: 3,
-    blue: 4,
-    purple: 5
+    const connectsForward = _.mapValues(colorDict, () => false);
+    $connections.forEach(($connection) => {
+        const color = getColor($connection);
+        const nextColor = getNextColor(color);
+        if (!nextColor) return;
+        $connections.forEach(($otherConnection) => {
+            if ($connection == $otherConnection) return;
+            if (doIntersect($connection, $otherConnection) && nextColor == getColor($otherConnection)) {
+                connectsForward[color] = true;
+            }
+        })
+    })
+
+    let idx = 0;
+    while (idx < colorList.length) {
+        const connectedColors = [];
+        while (idx < colorList.length && connectsForward[colorList[idx]]) {
+            connectedColors.push(colorList[idx]);
+            idx++;
+        }
+        connectedColors.push(colorList[idx]);
+        connectedColors.forEach((color) => {
+            multipliers[color] = connectedColors.length;
+        })
+        idx++;
+    }
+
+    Object.entries(multipliers).map(([color, value]) => setMultiplier(color, value));
 }
-const colorList = Object.keys(colorDict);
+
+// Color methods
 
 function getColor($el) {
     return $el.attr('class').split(' ')[0];

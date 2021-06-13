@@ -40,22 +40,44 @@ body {
     left: 2%;
     transform: translateY(-50%);
 
-    border-radius: 3px;
-    overflow: hidden;
+    text-align: center;
 
     .stripe {
-        height: 30px;
+        position: relative;
+        height: 32px;
+        line-height: 34px;
         width: 230px;
 
-        .score {
-            font-family: 'Press Start 2P';
-            font-size: 14px;
-            text-align: center;
-            line-height: 30px;
+        font-family: 'Press Start 2P';
+        font-size: 14px;
 
+        .score {
             color: white;
             text-shadow: 2px 2px 0 black;
         }
+        .multiplier {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        &:first-of-type {
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        &:last-of-type {
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+    }
+
+    &::after {
+        content: attr(data-total-score);
+        color: white;
+        font-family: 'Press Start 2P';
+        font-size: 14px;
+        line-height: 40px;
     }
 }
 
@@ -74,6 +96,9 @@ body {
     }
     &.text {
         background-color: transparent;
+    }
+    .multiplier {
+        color: darken(@color, 20%);
     }
 }
 .red {
