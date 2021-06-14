@@ -30,7 +30,17 @@ body {
 
 #left-sidebar {
     color: white;
-    padding: 24px;
+    padding: 30px;
+
+    #summary, #level-info {
+        overflow: hidden;
+    }
+    #level-info {
+        max-height: 0;
+    }
+    #summary {
+        max-height: 150;
+    }
 
     #level {
         width: 100%;
@@ -208,6 +218,20 @@ body {
 
     text-align: center;
 
+    #start-btn {
+        display: inline-block;
+        margin-top: 30px;
+        color: white;
+        cursor: pointer;
+
+        animation: pulse .75s linear infinite alternate-reverse;
+        &:hover {
+            animation: none;
+            font-size: 38px;
+            letter-spacing: 5px;
+            text-shadow: 3px 2px @green;
+        }
+    }
 }
 .text-success {
     color: white;
@@ -254,5 +278,18 @@ body {
     100% {
         opacity: 0;
         transform: translateY(120%);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: .3;
+        font-size: 37px;
+        letter-spacing: 3px;
+    }
+    100% {
+        opacity: 1;
+        font-size: 38px;
+        letter-spacing: 5px;
     }
 }

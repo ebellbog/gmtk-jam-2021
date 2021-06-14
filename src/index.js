@@ -28,6 +28,11 @@ let $connections = [];
 const messageQueue = [];
 let isFlashing = false;
 
+let isPlaying = false;
+let level = 1;
+
+const goalScores = [160, 200, 260];
+
 $(document).ready(() => {
     setupFlag();
     setupGame();
@@ -37,6 +42,8 @@ $(document).ready(() => {
 function hookEvents() {
     $game
         .on('mousedown', 'circle', (e) => {
+            if (!isPlaying) return;
+
             $startPt = $(e.target);
             const coords = {x: $startPt.attr('cx'), y: $startPt.attr('cy')};
             currentColor = getColor($startPt);
@@ -57,6 +64,8 @@ function hookEvents() {
             testIntersections();
         })
         .on('mouseover', 'circle', (e) => {
+            if (!isPlaying) return;
+
             const $circle = $(e.target);
             if ($newConnection) {
                 if (
@@ -77,6 +86,8 @@ function hookEvents() {
                 });
         })
         .on('mouseout', 'circle', (e) => {
+            if (!isPlaying) return;
+
             const $circle = $(e.target);
             if ($newConnection) {
                 [$newConnection, $startPt, $circle].forEach(($el) => $el.removeClass('connecting'));
@@ -119,6 +130,14 @@ function hookEvents() {
             $('.illegal').removeClass('illegal');
         }
     });
+
+    $('#start-btn').on('click', () => {
+        isPlaying = true;
+        $('#summary').animate({maxHeight: 0}, 400, () => {
+            $('#level-info').animate({maxHeight: 250}, 400);
+        });
+        $('#start-btn').animate({opacity: 0}, 400, () => $('#start-btn').css({display: 'none'}));
+    })
 }
 
 function setupGame() {
@@ -138,6 +157,25 @@ function setupGame() {
             ).addClass(randColor());
         }
     }
+}
+
+function advanceLevel() {
+    if (level > goalScores.length - 1) {
+        return;
+    }
+
+    level++;
+    $('#level').html(`Level ${level}`);
+    $('#score-goal').html(goalScores[level - 1]);
+
+    $('line').remove();
+    $('.connected connecting').removeClass('connected connecting');
+    randomizeBoard();
+
+    $connections = [];
+
+    resetMultipliers();
+    resetScores();
 }
 
 function randomizeBoard() {
@@ -171,15 +209,22 @@ const formatScore = (score, color) => (color) ? `${Math.round(score)} pts` : `To
 const setScore = (score, color) => (color) ? $(`.${color} .score`).html(formatScore(score, color)) : $('#flag').attr('data-total-score', formatScore(score));
 const calcScore = ($connection) => Math.round(getLength($connection) / (CIRCLE_SPACING + 2 * CIRCLE_SIZE));
 
+function resetScores() {
+    colorList.forEach((color) => {
+        setScore(0, color);
+        colorStripe(color, false);
+    });
+    setScore(0);
+    totalScore = 0;
+}
+
 function updateScores(lastColorAdded) {
     const prevScore = totalScore;
     const prevMultiplier = multipliers[lastColorAdded];
 
     updateMultipliers();
-    colorList.forEach((color) => {
-        setScore(0, color);
-        colorStripe(color, false);
-    });
+    resetScores();
+
     totalScore = $connections.reduce((total, $connection) => {
         const colorScore = calcScore($connection);
         const color = getColor($connection);
@@ -190,6 +235,16 @@ function updateScores(lastColorAdded) {
         return total + colorScore * multipliers[color];
     }, 0);
     setScore(totalScore);
+
+    if (totalScore >= goalScores[level - 1]) {
+        setTimeout(() => {
+            alert(`Great job! You passed Level ${level} 🥳`);
+            advanceLevel();
+        }, 500);
+        return;
+    }
+
+    // Flash scores
 
     const netScore = totalScore - prevScore;
     const netMultiplier = multipliers[lastColorAdded] - prevMultiplier;
@@ -208,10 +263,16 @@ function updateScores(lastColorAdded) {
     if (messages.length) flashMessages(messages);
 }
 
+function resetMultipliers() {
+    multipliers = _.mapValues(colorDict, () => 1);
+    colorList.forEach((color) => {
+        setMultiplier(color, 1);
+        setConnectsForward(color, false);
+    });
+}
+
 function updateMultipliers() {
-    if ($connections.length <= 1) {
-        return multipliers = _.mapValues(colorDict, () => 1);
-    }
+    if ($connections.length <= 1) return;
 
     const connectsForward = _.mapValues(colorDict, () => false);
     $connections.forEach(($connection) => {
@@ -301,7 +362,7 @@ function doIntersect($line1, $line2) {
     ];
 
     const extendLine = ([start, end]) => {
-        const amount = CIRCLE_SIZE / 2;
+        const amount = 5;
         if (start.x === end.x) { // for vertical slope
             if (start.y > end.y) {
                 start.y += amount;

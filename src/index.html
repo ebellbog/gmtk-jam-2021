@@ -8,7 +8,7 @@
     </head>
     <body lang="en">
         <div id="left-sidebar">
-            <div class="description">
+            <div id="summary" class="description">
                 Help connect the queer community! Click & drag lines between dots of matching colors.
             </div>
             <div class="header">RULES:</div>
@@ -16,15 +16,18 @@
                 <ul>
                     <li>You may only draw one line of each color</li>
                     <li>Longer lines score more points</li>
-                    <li>Criss-cross lines of adjacent colors in the rainbow to multiply your score!</li>
+                    <li>Lines can only cross if their colors are adjacent on the pride flag</li>
+                    <li>Cross lines to multiply your score!</li>
                 </ul>
             </div>
-            <div id="level">Level 1</div>
-            <div class="header">GOALS:</div>
-            <div class="description">
-                <ul>
-                    <li>Reach a score of over 200</li>
-                </ul>
+            <div id="level-info">
+                <div id="level">Level 1</div>
+                <div class="header">GOALS:</div>
+                <div class="description">
+                    <ul>
+                        <li>Reach a score of over <span id="score-goal">160</span></li>
+                    </ul>
+                </div>
             </div>
         </div>
         <div id="main">
@@ -41,7 +44,9 @@
             <div id="game-wrapper">
                 <svg id="game" xmlns="http://www.w3.org/2000/svg"></svg>
             </div>
-            <div id="footer"></div>
+            <div id="footer">
+                <a id="start-btn">START?</a>
+            </div>
         </div>
         <div id="right-sidebar">
             <div id="flag" data-total-score="Total: 0"></div>
