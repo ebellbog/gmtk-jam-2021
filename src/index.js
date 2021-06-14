@@ -43,6 +43,7 @@ function hookEvents() {
     $game
         .on('mousedown', 'circle', (e) => {
             if (!isPlaying) return;
+            if (!(e.which === 1)) return;
 
             $startPt = $(e.target);
             const coords = {x: $startPt.attr('cx'), y: $startPt.attr('cy')};
