@@ -7,6 +7,8 @@
 @blue: #0a72ff;
 @purple: #ba00ff;
 
+@btnColor: magenta;
+
 body {
     margin: 0;
     padding: 0;
@@ -95,7 +97,7 @@ body {
         cursor: pointer;
 
         &:hover {
-            text-shadow: 2px 2px magenta;
+            text-shadow: 2px 2px @btnColor;
         }
     }
 }
@@ -256,7 +258,7 @@ body {
             animation: none;
             font-size: 38px;
             letter-spacing: 5px;
-            text-shadow: 3px 2px @green;
+            text-shadow: 3px 2px @btnColor;
         }
     }
 }
