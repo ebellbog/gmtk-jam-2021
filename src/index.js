@@ -185,12 +185,18 @@ function resetGame() {
 
 function setLevel(newLevel, doHighlight) {
     level = newLevel;
-    $('#level').html(`Level ${level}`);
-    $('#score-goal').html(goalScores[level - 1]);
+    const _updateDOM = () => {
+        $('#level').html(`Level ${level}`);
+        $('#score-goal').html(goalScores[level - 1]);
+    }
 
     if (doHighlight) {
         $('#level-info').addClass('highlight');
-        setTimeout(() => $('#level-info').removeClass('highlight'), 750);
+        const duration = parseInt($('#level').css('animation-duration')) * 1000;
+        setTimeout(_updateDOM, duration / 2);
+        setTimeout(() => $('#level-info').removeClass('highlight'), duration);
+    } else {
+        _updateDOM();
     }
 }
 

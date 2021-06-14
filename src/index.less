@@ -47,30 +47,29 @@ body {
         max-height: 150;
     }
     #level-info {
+        margin-top: 16px;
         max-height: 0;
 
-        .description {
-            border-bottom: 2px solid white;
-            margin-bottom: 38px;
-        }
-
         &.highlight {
-            .header, .description, #level {
-                animation: blink .15s linear infinite alternate;
+            .header, .description li, #level {
+                animation: slide 2s ease;
+                animation-fill-mode: forwards;
             }
         }
     }
 
+    hr {
+        height: 1px;
+        background-color: white;
+    }
+
     #level {
         width: 100%;
+        padding: 5px 0 3px 0;
+
         text-align: center;
         text-transform: uppercase;
         font-size: 24px;
-
-        padding: 12px 0;
-        margin: 22px 0;
-        border-bottom: 2px solid white;
-        border-top: 2px solid white;
     }
 
     .description {
@@ -91,10 +90,13 @@ body {
     }
 
     .btn {
-        display: block;
-        margin-top: 20px;
-
         cursor: pointer;
+        display: block;
+
+        margin-top: 20px;
+        &:first-of-type {
+            margin-top: 30px;
+        }
 
         &:hover {
             text-shadow: 2px 2px @btnColor;
@@ -339,5 +341,23 @@ body {
     100% {
         color: magenta;
         border-color: magenta;
+    }
+}
+
+@keyframes slide {
+    0% {
+        transform: translateX(0%);
+    }
+    45% {
+        transform: translateX(-100%);
+    }
+    55% {
+        transform: translateX(-100%);
+    }
+    56% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(0);
     }
 }
