@@ -41,11 +41,22 @@ body {
     #summary, #level-info {
         overflow: hidden;
     }
-    #level-info {
-        max-height: 0;
-    }
     #summary {
         max-height: 150;
+    }
+    #level-info {
+        max-height: 0;
+
+        .description {
+            border-bottom: 2px solid white;
+            margin-bottom: 38px;
+        }
+
+        &.highlight {
+            .header, .description, #level {
+                animation: blink .15s linear infinite alternate;
+            }
+        }
     }
 
     #level {
@@ -83,10 +94,6 @@ body {
 
         cursor: pointer;
 
-        &:first-of-type {
-            padding-top: 30px;
-            border-top: 2px solid white;
-        }
         &:hover {
             text-shadow: 2px 2px magenta;
         }
@@ -311,5 +318,24 @@ body {
         opacity: 1;
         font-size: 38px;
         letter-spacing: 5px;
+    }
+}
+
+@keyframes blink {
+    0% {
+        color: white;
+        border-color: white;
+    }
+    50% {
+        color: white;
+        border-color: white;
+    }
+    51% {
+        color: magenta;
+        border-color: magenta;
+    }
+    100% {
+        color: magenta;
+        border-color: magenta;
     }
 }

@@ -182,10 +182,15 @@ function resetGame() {
     resetScores();
 }
 
-function setLevel(newLevel) {
+function setLevel(newLevel, doHighlight) {
     level = newLevel;
     $('#level').html(`Level ${level}`);
     $('#score-goal').html(goalScores[level - 1]);
+
+    if (doHighlight) {
+        $('#level-info').addClass('highlight');
+        setTimeout(() => $('#level-info').removeClass('highlight'), 750);
+    }
 }
 
 function advanceLevel() {
@@ -193,7 +198,7 @@ function advanceLevel() {
         return;
     }
 
-    setLevel(level + 1);
+    setLevel(level + 1, true);
 
     resetGame();
     randomizeBoard(true);
