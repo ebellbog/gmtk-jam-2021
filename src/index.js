@@ -2,7 +2,6 @@ import _ from 'lodash';
 import './index.less';
 
 const $game = $('#game');
-let totalScore = 0;
 
 const colorDict = {
     red: 0,
@@ -13,7 +12,7 @@ const colorDict = {
     purple: 5
 }
 const colorList = Object.keys(colorDict);
-let multipliers = _.mapValues(colorDict, () => 1);
+let multipliers;
 
 const CIRCLE_SIZE = 20;
 const CIRCLE_SPACING = 30;
@@ -29,9 +28,10 @@ const messageQueue = [];
 let isFlashing = false;
 
 let isPlaying = false;
-let level = 1;
+let level;
 
 const goalScores = [160, 200, 260];
+let totalScore = 0;
 
 $(document).ready(() => {
     setupFlag();
@@ -132,12 +132,25 @@ function hookEvents() {
     });
 
     $('#start-btn').on('click', () => {
-        isPlaying = true;
         $('#summary').animate({maxHeight: 0}, 400, () => {
-            $('#level-info').animate({maxHeight: 250}, 400);
+            $('#level-info').animate({maxHeight: 350}, 400);
         });
         $('#start-btn').animate({opacity: 0}, 400, () => $('#start-btn').css({display: 'none'}));
-    })
+        $('body').addClass('playing');
+
+        setLevel(1);
+        resetMultipliers();
+        randomizeBoard(true);
+
+        isPlaying = true;
+    });
+
+    $('#restart-level').on('click', resetGame);
+    $('#restart-game').on('click', () => {
+        setLevel(1);
+        resetGame();
+        randomizeBoard();
+    });
 }
 
 function setupGame() {
@@ -154,32 +167,46 @@ function setupGame() {
                 spacing * (col + 1),
                 height,
                 CIRCLE_SIZE,
-            ).addClass(randColor());
+            ).addClass(colorList[row % colorList.length]);
         }
     }
 }
 
-function advanceLevel() {
-    if (level > goalScores.length - 1) {
-        return;
-    }
-
-    level++;
-    $('#level').html(`Level ${level}`);
-    $('#score-goal').html(goalScores[level - 1]);
+function resetGame() {
+    $connections = [];
 
     $('line').remove();
-    $('.connected connecting').removeClass('connected connecting');
-    randomizeBoard();
-
-    $connections = [];
+    $('.connected, .connecting').removeClass('connected connecting');
 
     resetMultipliers();
     resetScores();
 }
 
-function randomizeBoard() {
-    $('circle').each((idx, el) => $(el).attr('class', randColor()));
+function setLevel(newLevel) {
+    level = newLevel;
+    $('#level').html(`Level ${level}`);
+    $('#score-goal').html(goalScores[level - 1]);
+}
+
+function advanceLevel() {
+    if (level === goalScores.length) {
+        return;
+    }
+
+    setLevel(level + 1);
+
+    resetGame();
+    randomizeBoard(true);
+}
+
+function randomizeBoard(doAnimate) {
+    let iterations = doAnimate ? 8 : 1;
+    const _randomize = () => {
+        $('circle').each((idx, el) => $(el).attr('class', randColor()));
+        iterations--;
+        if (iterations) setTimeout(_randomize, 75);
+    };
+    _randomize();
 }
 
 /* Flag methods */
@@ -238,7 +265,7 @@ function updateScores(lastColorAdded) {
 
     if (totalScore >= goalScores[level - 1]) {
         setTimeout(() => {
-            alert(`Great job! You passed Level ${level} 🥳`);
+            alert(`Great job! You passed Level ${level} 🌈`);
             advanceLevel();
         }, 500);
         return;
