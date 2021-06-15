@@ -37,11 +37,12 @@ $(document).ready(() => {
     setupFlag();
     setupGame();
     hookEvents();
+    shimmer();
 });
 
 function hookEvents() {
     $game
-        .on('mousedown', 'circle', (e) => {
+        .on('mousedown', '.circle', (e) => {
             if (!isPlaying) return;
             if (!(e.which === 1)) return;
 
@@ -64,7 +65,7 @@ function hookEvents() {
             updateLine($newConnection, {x, y});
             testIntersections();
         })
-        .on('mouseover', 'circle', (e) => {
+        .on('mouseover', '.circle', (e) => {
             if (!isPlaying) return;
 
             const $circle = $(e.target);
@@ -86,7 +87,7 @@ function hookEvents() {
                     step: (now) => $circle.attr('r', now)
                 });
         })
-        .on('mouseout', 'circle', (e) => {
+        .on('mouseout', '.circle', (e) => {
             if (!isPlaying) return;
 
             const $circle = $(e.target);
@@ -111,7 +112,7 @@ function hookEvents() {
                 $connections = $connections.filter(($connection) => {
                     if ($connection.hasClass('illegal')) {
                         $connection.remove();
-                        $(`circle.connected.${getColor($connection)}`).removeClass('connecting connected');
+                        $(`.circle.connected.${getColor($connection)}`).removeClass('connecting connected');
                         return false;
                     }
                     return true;
@@ -168,7 +169,9 @@ function setupGame() {
                 spacing * (col + 1),
                 height,
                 CIRCLE_SIZE,
-            ).addClass(colorList[row % colorList.length]);
+            )
+            .attr({'data-row': row, 'data-col': col})
+            .addClass(`${colorList[row % colorList.length]} circle`);
         }
     }
 }
@@ -214,11 +217,36 @@ function advanceLevel() {
 function randomizeBoard(doAnimate) {
     let iterations = doAnimate ? 8 : 1;
     const _randomize = () => {
-        $('circle').each((idx, el) => $(el).attr('class', randColor()));
+        $('circle').each((idx, el) => $(el).attr('class', `${randColor()} circle`));
         iterations--;
         if (iterations) setTimeout(_randomize, 75);
     };
     _randomize();
+}
+
+function shimmer() {
+    let row = 0, col = 0;
+    const _shimmerDiagonal = () => {
+        let col = 0, tempRow = row;
+        while (tempRow > -1 && col < GAME_COLS) {
+            if (tempRow < GAME_ROWS) {
+                $(`.circle[data-row="${tempRow}"][data-col="${col}"]`).addClass('shimmer');
+            }
+            tempRow--;
+            col++;
+        }
+        row++;
+
+        if (isPlaying) {
+            return $('.shimmer').removeClass('shimmer');
+        }
+        else if (row < GAME_ROWS + GAME_COLS) setTimeout(_shimmerDiagonal, 90);
+        else setTimeout(() => {
+            $('.shimmer').removeClass('shimmer');
+            setTimeout(shimmer, 1800);
+        }, 1000);
+    }
+    _shimmerDiagonal();
 }
 
 /* Flag methods */

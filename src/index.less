@@ -30,7 +30,7 @@ body {
     }
 
     &.playing {
-        circle {
+        .circle {
             cursor: pointer;
         }
     }
@@ -172,7 +172,9 @@ body {
 }
 
 .color-class(@color) {
-    fill: fade(@color, 25%);
+    fill: @color;
+    fill-opacity: 25%;
+
     stroke: @color;
     color: @color;
     background-color: @color;
@@ -182,13 +184,25 @@ body {
         box-shadow: inset 0 0 0 2px @color;
     }
     &.connecting, &.connected {
-        fill: @color;
+        fill-opacity: 100%;
     }
     &.text {
         background-color: transparent;
     }
     .multiplier {
         color: darken(@color, 20%);
+    }
+
+    &.shimmer {
+        animation: shimmer 0.5s 2 alternate;
+    }
+    @keyframes shimmer {
+        0% {
+            fill-opacity: 25%;
+        }
+        100% {
+            fill-opacity: 100%;
+        }
     }
 }
 .red {
@@ -219,7 +233,7 @@ body {
     width: 800px;
     height: 600px;
 
-    circle {
+    .circle {
         stroke-width: 3px;
     }
 
@@ -255,7 +269,7 @@ body {
         color: white;
         cursor: pointer;
 
-        animation: pulse .75s linear infinite alternate-reverse;
+        animation: pulse .85s linear infinite alternate-reverse;
         &:hover {
             animation: none;
             font-size: 38px;
@@ -314,7 +328,7 @@ body {
 
 @keyframes pulse {
     0% {
-        opacity: .3;
+        opacity: .4;
         font-size: 37px;
         letter-spacing: 3px;
     }
