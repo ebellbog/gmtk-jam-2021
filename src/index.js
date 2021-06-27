@@ -428,6 +428,16 @@ function doIntersect($line1, $line2) {
         {x: parseInt($line.attr('x2')), y: parseInt($line.attr('y2'))}
     ];
 
+    const getSlope = ([start, end]) =>
+        (end.x !== start.x) ?
+            (end.y - start.y) / (end.x - start.x) :
+            null;
+    const getIntercept = (line) => {
+        const m = getSlope(line);
+        const {x, y} = line[0];
+        return y - m * x;
+    };
+
     const extendLine = ([start, end]) => {
         const amount = 5;
         if (start.x === end.x) { // for vertical slope
@@ -440,7 +450,7 @@ function doIntersect($line1, $line2) {
             }
             return [start, end];
         }
-        const slope = (end.y - start.y) / (end.x - start.x);
+        const slope = getSlope([start, end]);
         const deltaX = Math.sqrt(Math.pow(amount, 2) / (Math.pow(slope, 2) + 1));
         if (end.x > start.x) {
             end.x += deltaX;
@@ -456,12 +466,30 @@ function doIntersect($line1, $line2) {
         return [start, end];
     }
 
-    const [start1, end1] = extendLine(getCoords($line1));
-    const [start2, end2] = extendLine(getCoords($line2));
+    const line1 = extendLine(getCoords($line1));
+    const line2 = extendLine(getCoords($line2));
 
-    const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
-    return ccw(start1, start2, end2) !== ccw(end1, start2, end2) &&
-        ccw(start1, end1, start2) !== ccw(start1, end1, end2);
+    const m1 = getSlope(line1);
+    const m2 = getSlope(line2);
+
+    if (m1 === m2) return false; // Parallel lines can't intersect; colinearity doesn't count either
+
+    const b1 = getIntercept(line1);
+    const b2 = getIntercept(line2);
+
+    const iX =
+        (m1 === null) ? line1[0].x : // If either line is vertical, the x coord of the intersection will simply be
+        (m2 === null) ? line2[0].x : // either one of that line's (equal) x coords
+        (b2 - b1) / (m1 - m2);
+    const iY = iX * m1 + b1; // or iX * m2 + b2
+
+    // Test whether the theoretical intersection is within the actual bounds of both line segments
+    const withinBounds = ([start, end]) =>
+        iX >= Math.min(start.x, end.x) &&
+        iX <= Math.max(start.x, end.x) &&
+        iY >= Math.min(start.y, end.y) &&
+        iY <= Math.max(start.y, end.y)
+    return [line1, line2].every((line) => withinBounds(line)) ? [iX, iY] : false;
 }
 
 const testIntersections = _.throttle(() => {
